@@ -25,6 +25,11 @@ class HtmlDownloader(object):
 	def download(self,url):
 		if url is None:
 			return None
+
+		proxy_support = urllib.request.ProxyHandler({'http': 'localhost:8087'})
+		opener = urllib.request.build_opener(proxy_support)
+		urllib.request.install_opener(opener)
+
 		response=urllib.request.urlopen(url)
 		if response.getcode()!=200:
 			return None	
@@ -38,7 +43,8 @@ from urllib.parse import urljoin
 class HtmlParser(object):
 	def _get_new_urls(self,page_url,soup):
 		new_urls=set()
-		links=soup.find_all('a',href=re.compile("/"))
+		#links=soup.find_all('a',href=re.compile("/explore/zhenzhiwaitao/|/explore/banmiansheji/"))
+		links=soup.find_all('a',href=re.compile("htm_data|thread0806"))
 		for link in links:
 			new_url=link['href']
 			new_full_url=urljoin(page_url,new_url)
@@ -50,9 +56,14 @@ class HtmlParser(object):
 			res_data['url']=page_url
 			title_node=soup.find("title")
 			res_data['title']=title_node.get_text()
+			print(res_data['title'])
 			#summary_node=soup.find('div',class_="tpc_content do_not_catch")
-			summary_node=soup.find('div',class_="main-image").find('img')
-			res_data['summary']=summary_node
+			summary_node=soup.find('title',text=re.compile('千佳'))
+			print(summary_node)
+			if summary_node is None:
+				return None
+			res_data['summary']=title_node.get_text()
+			#res_data['summary']=soup.find('div',class_="tpc_content do_not_catch").find('img')
 			return res_data
 		except:
 			print ('	Did_not_get_new_data_from_this_URL')
@@ -60,8 +71,9 @@ class HtmlParser(object):
 	def parse(self,page_url,html_cont):
 		if page_url is None or html_cont is None:
 			return
-		soup=BeautifulSoup(html_cont,'html.parser',from_encoding="utf-8")
-		#print(soup.prettify())                      #from_encoding="gb18030"
+		#soup=BeautifulSoup(html_cont,'html.parser',from_encoding="utf-8")
+		soup=BeautifulSoup(html_cont,'html.parser',from_encoding="gb18030")
+		#print(soup.prettify())
 		new_urls=self._get_new_urls(page_url,soup)
 		new_data=self._get_new_data(page_url,soup)
 		return new_urls,new_data
@@ -107,7 +119,7 @@ class SpiderMain(object):
 				new_urls,new_data=self.parser.parse(new_url,html_cont)
 				self.urls.add_new_urls(new_urls)
 				self.outputer.collect_data(new_data)
-				if count==100:
+				if count==1000:
 					break
 				count+=1
 			except:
@@ -115,7 +127,7 @@ class SpiderMain(object):
 		self.outputer.output_html()
 		
 		
-#root_url="http://t66y.com/thread0806.php?fid=15"
-root_url="http://huaban.com/"
+root_url="http://t66y.com/thread0806.php?fid=15"
+#root_url="http://huaban.com/"
 obj_spider=SpiderMain()
 obj_spider.craw(root_url)
