@@ -11,7 +11,7 @@ for x in range(len(a_1)):
 	fout.write(a_1[x]+'\n')
 
 
-url_2 = 'https://doub.io/sszhfx/'
+url_2 = 'https://doub.bid/sszhfx/'
 r_2 = requests.get(url_2)
 a_2 = re.findall(r'ss://.*?"', r_2.text)
 for x in range(len(a_2)):
